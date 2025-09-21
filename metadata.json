@@ -1,0 +1,5 @@
+{
+  "name": "Odyssey",
+  "description": "A sophisticated travel itinerary generator that uses a multi-agent, tool-using workflow to create detailed, grounded, and personalized travel plans.",
+  "requestFramePermissions": []
+}
