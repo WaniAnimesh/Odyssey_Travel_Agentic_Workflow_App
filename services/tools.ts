@@ -1,3 +1,4 @@
+
 import type { UserPreferences, FlightOption, Accommodation, Activity } from '../types';
 import { loadGoogleMapsAPI, parseTravelerCount, formatIsoDuration } from '../utils';
 import { iataCodeAgent } from './agents';
@@ -65,8 +66,8 @@ let amadeusToken: { token: string; expires: number } | null = null;
  * @throws {Error} if API keys are missing or authentication fails.
  */
 async function getAmadeusToken(): Promise<string> {
-    const apiKey = "Zsww9QnqaqiA7Bg4HqtlfF30UMDq26VA";
-    const apiSecret = "Gh6HFCwDOl6WAPVO";
+    const apiKey = process.env.AMADEUS_API_KEY;
+    const apiSecret = process.env.AMADEUS_API_SECRET;
 
     if (!apiKey || !apiSecret) {
         throw new Error("Amadeus API Key/Secret is not configured. Please set AMADEUS_API_KEY and AMADEUS_API_SECRET environment variables.");
@@ -115,8 +116,8 @@ async function getAmadeusToken(): Promise<string> {
 export async function searchFlights(departureCode: string, destinationCode: string, startDate: string, travelers: string): Promise<FlightOption[]> {
     console.log(`[Tool] Searching flights from ${departureCode} to ${destinationCode} for ${travelers} on ${startDate}`);
     
-    const apiKey = "Zsww9QnqaqiA7Bg4HqtlfF30UMDq26VA";
-    const apiSecret = "Gh6HFCwDOl6WAPVO";
+    const apiKey = process.env.AMADEUS_API_KEY;
+    const apiSecret = process.env.AMADEUS_API_SECRET;
     
     if (!apiKey || !apiSecret) {
         console.warn("[Tool:searchFlights] Amadeus API keys not configured. Returning mocked flight data.");

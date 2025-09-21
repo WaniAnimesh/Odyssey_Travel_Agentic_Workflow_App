@@ -1,3 +1,4 @@
+
 /**
  * Calculates the total number of days for a trip, inclusive of start and end dates.
  * @param startDate - The start date of the trip in 'YYYY-MM-DD' format.
@@ -89,7 +90,7 @@ export function formatIsoDuration(isoDuration: string): string {
 }
 
 
-const GOOGLE_MAPS_API_KEY = "AIzaSyBB0ovmp0K8bgy8iBMvtezYeH9SPy9Z8I4";
+const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 let googleMapsPromise: Promise<void> | null = null;
 
 /**
@@ -106,6 +107,12 @@ export function loadGoogleMapsAPI(): Promise<void> {
         // If the script is already on the page, resolve immediately.
         if (window.google && window.google.maps) {
             resolve();
+            return;
+        }
+
+        if (!GOOGLE_MAPS_API_KEY) {
+            console.error("Google Maps API Key is not configured in environment variables.");
+            reject(new Error("Failed to load Google Maps API: Key not found."));
             return;
         }
 
