@@ -12,9 +12,12 @@ import { getTripDurationInDays } from './utils';
 export async function generateDraftItinerary(prefs: UserPreferences): Promise<Itinerary> {
     console.log("--- Starting Draft Itinerary Workflow ---");
 
-    // Step 1: Get destination location data
-    console.log(`[Orchestrator] Step 1: Fetching location data for ${prefs.destination}`);
-    const destinationLocation = await getLocationData(prefs.destination);
+    // Fix: Get location data for both departure and destination to satisfy Itinerary type requirements.
+    console.log(`[Orchestrator] Step 1: Fetching location data for ${prefs.departure} and ${prefs.destination}`);
+    const [departureLocation, destinationLocation] = await Promise.all([
+        getLocationData(prefs.departure),
+        getLocationData(prefs.destination)
+    ]);
     console.log(`[Orchestrator] -> Received location data.`);
 
     // Step 2: Search for accommodation using a tool
@@ -35,7 +38,8 @@ export async function generateDraftItinerary(prefs: UserPreferences): Promise<It
     // packing list, and unique experiences all at once. This avoids rate limit errors.
     const duration = getTripDurationInDays(prefs.startDate, prefs.endDate);
     console.log(`[Orchestrator] Step 5: Engaging Comprehensive Itinerary Agent for a ${duration}-day trip.`);
-    const { dailyPlans, packingList, authenticExperiences, unexpectedDiscoveries } = await comprehensiveItineraryAgent(
+    // Fix: Destructure all properties from the agent's response, including tripTitle, contingencyPlans, and languageGuide.
+    const { tripTitle, dailyPlans, packingList, authenticExperiences, unexpectedDiscoveries, contingencyPlans, languageGuide } = await comprehensiveItineraryAgent(
         prefs,
         duration,
         accommodation,
@@ -45,13 +49,19 @@ export async function generateDraftItinerary(prefs: UserPreferences): Promise<It
     console.log(`[Orchestrator] -> Comprehensive Agent created full draft itinerary.`);
 
     // Step 6: Assemble the draft itinerary from the single agent response.
+    // Fix: Add all missing properties to match the Itinerary type.
     const draftItinerary: Itinerary = {
+        tripTitle,
         destination: prefs.destination,
+        departureIata: departureLocation.iata,
+        destinationIata: destinationLocation.iata,
         accommodation: accommodation,
         dailyPlans: dailyPlans,
         packingList: packingList,
         authenticExperiences: authenticExperiences,
         unexpectedDiscoveries: unexpectedDiscoveries,
+        contingencyPlans,
+        languageGuide,
     };
 
     console.log("--- Draft Itinerary Workflow Complete ---");
@@ -164,7 +174,7 @@ export async function startPlanningWorkflow(prefs: UserPreferences): Promise<{ f
  */
 export async function continuePlanningWorkflow(selectedFlight: FlightOption, context: PlanningContext): Promise<Itinerary> {
     console.log("--- Continuing Planning Workflow (Part 2: Itinerary Generation) ---");
-    const { prefs, destinationLocation } = context;
+    const { prefs, destinationLocation, departureLocation } = context;
 
     console.log(`[Orchestrator] Step 1: Searching for accommodation`);
     const accommodation: Accommodation = await searchAccommodation(prefs.destination, destinationLocation, prefs);
@@ -179,7 +189,8 @@ export async function continuePlanningWorkflow(selectedFlight: FlightOption, con
 
     const duration = getTripDurationInDays(prefs.startDate, prefs.endDate);
     console.log(`[Orchestrator] Step 4: Engaging Comprehensive Itinerary Agent.`);
-    const { dailyPlans, packingList, authenticExperiences, unexpectedDiscoveries } = await comprehensiveItineraryAgent(
+    // Fix: Destructure all properties from the agent's response, including tripTitle, contingencyPlans, and languageGuide.
+    const { tripTitle, dailyPlans, packingList, authenticExperiences, unexpectedDiscoveries, contingencyPlans, languageGuide } = await comprehensiveItineraryAgent(
         prefs,
         duration,
         accommodation,
@@ -188,14 +199,20 @@ export async function continuePlanningWorkflow(selectedFlight: FlightOption, con
     );
     console.log(`[Orchestrator] -> Agent returned full itinerary details.`);
 
+    // Fix: Add all missing properties to match the Itinerary type.
     const finalItinerary: Itinerary = {
+        tripTitle,
         destination: prefs.destination,
+        departureIata: departureLocation.iata,
+        destinationIata: destinationLocation.iata,
         flight: selectedFlight,
         accommodation: accommodation,
         dailyPlans: dailyPlans,
         packingList: packingList,
         authenticExperiences: authenticExperiences,
         unexpectedDiscoveries: unexpectedDiscoveries,
+        contingencyPlans,
+        languageGuide,
     };
 
     console.log("--- Full Itinerary Generation Complete ---");

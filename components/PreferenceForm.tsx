@@ -21,7 +21,7 @@ const PreferenceForm: React.FC<PreferenceFormProps> = ({ onSubmit, isLoading, er
         destination: '',
         startDate: '',
         endDate: '',
-        budget: 'Moderate',
+        budget: 'Mid-range',
         travelers: 'Solo',
         travelStyle: ['Cultural Immersion'],
         interests: ['History', 'Food & Cuisine'],
@@ -102,9 +102,9 @@ const PreferenceForm: React.FC<PreferenceFormProps> = ({ onSubmit, isLoading, er
                     </div>
                      <div>
                         <FormLabel htmlFor="budget">Budget</FormLabel>
-                        <select name="budget" id="budget" value={prefs.budget} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <select name="budget" id="budget" value={prefs.budget} onChange={handleChange} className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
                             <option>Budget</option>
-                            <option>Moderate</option>
+                            <option>Mid-range</option>
                             <option>Luxury</option>
                         </select>
                     </div>

@@ -54,13 +54,14 @@ const App: React.FC = () => {
             console.error("Workflow failed (Draft Itinerary):", err);
             const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
             setError(`Failed to generate draft itinerary. Error: ${errorMessage}`);
+            setView('form'); // Go back to form on error
         } finally {
             setIsLoading(false);
             stopLogging();
         }
     };
 
-    const handleAcceptItinerary = async () => {
+    const handleFindFlights = async () => {
         if (!userPreferences) return;
         
         setIsLoading(true);
@@ -81,6 +82,7 @@ const App: React.FC = () => {
             console.error("Workflow failed (Flight Search):", err);
             const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
             setError(`Failed to find flights. Error: ${errorMessage}`);
+            setView('itinerary');
         } finally {
             setIsLoading(false);
             stopLogging();
@@ -122,7 +124,7 @@ const App: React.FC = () => {
     };
 
     const renderContent = () => {
-        if (isLoading && view !== 'flightSelection') {
+        if (isLoading && (view === 'form' || view === 'booking')) {
             return <div className="mt-10"><LoadingSpinner /></div>;
         }
 
@@ -136,13 +138,45 @@ const App: React.FC = () => {
                     </div>
                 );
             case 'itinerary':
+                if (!itinerary || !userPreferences) return null;
+                const formattedStartDate = new Date(userPreferences.startDate + 'T00:00:00Z').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+                const formattedEndDate = new Date(userPreferences.endDate + 'T00:00:00Z').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+
                 return (
-                    <div>
-                        <div className="mb-6 flex justify-end">
-                            <button onClick={handleStartNewPlan} className="px-6 py-2 bg-slate-600 text-white font-semibold rounded-lg shadow-md hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 transition-colors">&#8592; Start New Plan</button>
+                    <div className="space-y-6 animate-fade-in">
+                        {/* Itinerary Header */}
+                        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                            <div>
+                                <h2 className="text-3xl sm:text-4xl font-bold text-gray-800">{itinerary.tripTitle}</h2>
+                                <p className="text-gray-500 mt-1">{formattedStartDate} to {formattedEndDate}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button className="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors">Share</button>
+                                <button onClick={handleStartNewPlan} className="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors">New Plan</button>
+                            </div>
                         </div>
-                        {error && <div className="mb-4 bg-red-100 border border-red-400 text-red-700 p-4 rounded-lg"><h3 className="font-bold text-lg mb-2">Error</h3><p>{error}</p></div>}
-                        {itinerary && <ItineraryDisplay itinerary={itinerary} onAccept={handleAcceptItinerary} isAccepting={isLoading} />}
+
+                        {/* Flight Plan Card */}
+                         <div className="bg-white p-4 rounded-xl shadow-md border border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+                            <div className="flex items-center gap-4">
+                                <div className="bg-blue-100 p-3 rounded-full">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500">Your Flight Plan</p>
+                                    <p className="font-bold text-lg text-gray-800">{itinerary.departureIata} &rarr; {itinerary.destinationIata}</p>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={handleFindFlights}
+                                disabled={isLoading}
+                                className="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-transform transform hover:scale-105 disabled:bg-blue-300 disabled:transform-none"
+                            >
+                                {isLoading ? 'Searching...' : 'Search Flights'}
+                            </button>
+                        </div>
+                        {error && <div className="my-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg" role="alert"><p>{error}</p></div>}
+                        <ItineraryDisplay itinerary={itinerary} />
                     </div>
                 );
             case 'flightSelection':

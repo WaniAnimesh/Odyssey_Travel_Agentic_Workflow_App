@@ -1,4 +1,4 @@
-import type { UserPreferences, Itinerary, FlightOption, Accommodation, BookingDetails, PlanningContext, LocationData } from '../types';
+import type { UserPreferences, Itinerary, FlightOption, Accommodation, BookingDetails } from '../types';
 import { getLocationData, searchFlights, searchAccommodation, getWeatherForecast, findNearbyActivities } from './tools';
 import { comprehensiveItineraryAgent, bookingDetailsAgent } from './agents';
 import { getTripDurationInDays } from '../utils';
@@ -12,9 +12,12 @@ import { getTripDurationInDays } from '../utils';
 export async function generateDraftItinerary(prefs: UserPreferences): Promise<Itinerary> {
     console.log("--- Starting Draft Itinerary Workflow ---");
 
-    // Step 1: Get destination location data
-    console.log(`[Orchestrator] Step 1: Fetching location data for ${prefs.destination}`);
-    const destinationLocation = await getLocationData(prefs.destination);
+    // Step 1: Get location data for both departure and destination in parallel
+    console.log(`[Orchestrator] Step 1: Fetching location data for ${prefs.departure} and ${prefs.destination}`);
+    const [departureLocation, destinationLocation] = await Promise.all([
+        getLocationData(prefs.departure),
+        getLocationData(prefs.destination)
+    ]);
     console.log(`[Orchestrator] -> Received location data.`);
 
     // Step 2: Search for accommodation using a tool
@@ -35,7 +38,15 @@ export async function generateDraftItinerary(prefs: UserPreferences): Promise<It
     // packing list, and unique experiences all at once. This avoids rate limit errors.
     const duration = getTripDurationInDays(prefs.startDate, prefs.endDate);
     console.log(`[Orchestrator] Step 5: Engaging Comprehensive Itinerary Agent for a ${duration}-day trip.`);
-    const { dailyPlans, packingList, authenticExperiences, unexpectedDiscoveries } = await comprehensiveItineraryAgent(
+    const { 
+        tripTitle, 
+        dailyPlans, 
+        packingList, 
+        authenticExperiences, 
+        unexpectedDiscoveries,
+        contingencyPlans,
+        languageGuide
+    } = await comprehensiveItineraryAgent(
         prefs,
         duration,
         accommodation,
@@ -46,12 +57,17 @@ export async function generateDraftItinerary(prefs: UserPreferences): Promise<It
 
     // Step 6: Assemble the draft itinerary from the single agent response.
     const draftItinerary: Itinerary = {
+        tripTitle,
         destination: prefs.destination,
+        departureIata: departureLocation.iata,
+        destinationIata: destinationLocation.iata,
         accommodation: accommodation,
         dailyPlans: dailyPlans,
         packingList: packingList,
         authenticExperiences: authenticExperiences,
         unexpectedDiscoveries: unexpectedDiscoveries,
+        contingencyPlans: contingencyPlans,
+        languageGuide: languageGuide,
     };
 
     console.log("--- Draft Itinerary Workflow Complete ---");
@@ -66,6 +82,9 @@ export async function generateDraftItinerary(prefs: UserPreferences): Promise<It
 export async function findFlightOptions(prefs: UserPreferences): Promise<FlightOption[]> {
     console.log("--- Starting Flight Search Workflow ---");
     
+    // The IATA codes are already in the itinerary object, but for separation of concerns,
+    // this function can re-fetch them if needed, or we could pass them directly.
+    // Re-fetching ensures this function can be used independently if required.
     const [departureLocation, destinationLocation] = await Promise.all([
         getLocationData(prefs.departure),
         getLocationData(prefs.destination)
@@ -120,93 +139,4 @@ export async function generateBookingDetails(itinerary: Itinerary): Promise<Book
 
     console.log("--- Booking Details Workflow Complete ---");
     return finalBookingDetails;
-}
-
-// These functions support the old "flight-first" workflow and are kept for potential future use,
-// but the main application now uses the "draft-first" workflow above.
-
-/**
- * Starts the planning workflow by finding flight options for the user.
- * @param prefs The user's travel preferences.
- * @returns An object containing flight options and a planning context for the next step.
- */
-export async function startPlanningWorkflow(prefs: UserPreferences): Promise<{ flightOptions: FlightOption[], context: PlanningContext }> {
-    console.log("--- Starting Planning Workflow (Part 1: Flight Search) ---");
-    
-    const [departureLocation, destinationLocation]: [LocationData, LocationData] = await Promise.all([
-        getLocationData(prefs.departure),
-        getLocationData(prefs.destination)
-    ]);
-
-    const flightOptions = await searchFlights(
-        departureLocation.iata,
-        destinationLocation.iata,
-        prefs.startDate,
-        prefs.travelers
-    );
-
-    const context: PlanningContext = {
-        prefs,
-        departureLocation,
-        destinationLocation,
-    };
-
-    console.log(`--- Found ${flightOptions.length} flights. Returning options and context. ---`);
-    return { flightOptions, context };
-}
-
-/**
- * Continues the planning workflow after a flight has been selected.
- * Generates the full itinerary details around the chosen flight.
- * @param selectedFlight The flight option chosen by the user.
- * @param context The planning context from the previous workflow step.
- * @returns A promise that resolves to the complete Itinerary object.
- */
-export async function continuePlanningWorkflow(selectedFlight: FlightOption, context: PlanningContext): Promise<Itinerary> {
-    console.log("--- Continuing Planning Workflow (Part 2: Itinerary Generation) ---");
-    const { prefs, destinationLocation } = context;
-
-    console.log(`[Orchestrator] Step 1: Searching for accommodation`);
-    const accommodation: Accommodation = await searchAccommodation(prefs.destination, destinationLocation, prefs);
-    console.log(`[Orchestrator] -> Found accommodation:`, accommodation);
-    
-    console.log(`[Orchestrator] Step 2: Finding potential activities.`);
-    const potentialActivities = await findNearbyActivities(accommodation.location, prefs.interests);
-    console.log(`[Orchestrator] -> Found ${potentialActivities.length} potential activities.`);
-
-    console.log(`[Orchestrator] Step 3: Fetching weather forecast.`);
-    const weatherForecast = await getWeatherForecast(prefs.destination, prefs.startDate);
-
-    const duration = getTripDurationInDays(prefs.startDate, prefs.endDate);
-    console.log(`[Orchestrator] Step 4: Engaging Comprehensive Itinerary Agent.`);
-    const { dailyPlans, packingList, authenticExperiences, unexpectedDiscoveries } = await comprehensiveItineraryAgent(
-        prefs,
-        duration,
-        accommodation,
-        potentialActivities,
-        weatherForecast
-    );
-    console.log(`[Orchestrator] -> Agent returned full itinerary details.`);
-
-    const finalItinerary: Itinerary = {
-        destination: prefs.destination,
-        flight: selectedFlight,
-        accommodation: accommodation,
-        dailyPlans: dailyPlans,
-        packingList: packingList,
-        authenticExperiences: authenticExperiences,
-        unexpectedDiscoveries: unexpectedDiscoveries,
-    };
-
-    console.log("--- Full Itinerary Generation Complete ---");
-    return finalItinerary;
-}
-
-/**
- * A workflow wrapper for generating the final booking details.
- * @param itinerary The complete itinerary.
- * @returns A promise resolving to the booking details.
- */
-export async function getBookingDetailsWorkflow(itinerary: Itinerary): Promise<BookingDetails> {
-    return generateBookingDetails(itinerary);
 }

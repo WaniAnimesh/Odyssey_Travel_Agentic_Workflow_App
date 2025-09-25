@@ -90,7 +90,7 @@ export function formatIsoDuration(isoDuration: string): string {
 }
 
 
-const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
+const GOOGLE_MAPS_API_KEY = "AIzaSyBB0ovmp0K8bgy8iBMvtezYeH9SPy9Z8I4";
 let googleMapsPromise: Promise<void> | null = null;
 
 /**
@@ -111,7 +111,7 @@ export function loadGoogleMapsAPI(): Promise<void> {
         }
 
         if (!GOOGLE_MAPS_API_KEY) {
-            console.error("Google Maps API Key is not configured in environment variables.");
+            console.error("Google Maps API Key is not configured.");
             reject(new Error("Failed to load Google Maps API: Key not found."));
             return;
         }

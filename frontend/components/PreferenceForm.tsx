@@ -85,32 +85,32 @@ const PreferenceForm: React.FC<PreferenceFormProps> = ({ onSubmit, isLoading, er
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <FormLabel htmlFor="departure">Departure</FormLabel>
-                        <input type="text" name="departure" id="departure" value={prefs.departure} onChange={handleChange} placeholder="e.g., San Francisco" required className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" />
+                        <input type="text" name="departure" id="departure" value={prefs.departure} onChange={handleChange} placeholder="e.g., San Francisco" required className="mt-1 block w-full px-4 py-3 border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" />
                     </div>
                     <div>
                         <FormLabel htmlFor="destination">Destination</FormLabel>
-                        <input type="text" name="destination" id="destination" value={prefs.destination} onChange={handleChange} placeholder="e.g., Kyoto, Japan" required className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" />
+                        <input type="text" name="destination" id="destination" value={prefs.destination} onChange={handleChange} placeholder="e.g., Kyoto, Japan" required className="mt-1 block w-full px-4 py-3 border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" />
                     </div>
                     <div>
                         <FormLabel htmlFor="startDate">Start Date</FormLabel>
-                        <input type="date" name="startDate" id="startDate" value={prefs.startDate} onChange={handleStartDateChange} min={getTodayString()} required className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" />
+                        <input type="date" name="startDate" id="startDate" value={prefs.startDate} onChange={handleStartDateChange} min={getTodayString()} required className="mt-1 block w-full px-4 py-3 border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" />
                     </div>
                     <div>
                         <FormLabel htmlFor="endDate">End Date</FormLabel>
-                        <input type="date" name="endDate" id="endDate" value={prefs.endDate} onChange={handleChange} min={prefs.startDate || getTodayString()} disabled={!prefs.startDate} required className={`mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 ${isEndDateInvalid ? 'border-red-500 ring-red-500' : ''}`} />
+                        <input type="date" name="endDate" id="endDate" value={prefs.endDate} onChange={handleChange} min={prefs.startDate || getTodayString()} disabled={!prefs.startDate} required className={`mt-1 block w-full px-4 py-3 border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 ${isEndDateInvalid ? 'border-red-500 ring-red-500' : ''}`} />
                          {isEndDateInvalid && <p className="text-xs text-red-600 mt-1">End date cannot be before start date.</p>}
                     </div>
                      <div>
                         <FormLabel htmlFor="budget">Budget</FormLabel>
-                        <select name="budget" id="budget" value={prefs.budget} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                            <option>Budget</option>
-                            <option>Moderate</option>
-                            <option>Luxury</option>
+                        <select name="budget" id="budget" value={prefs.budget} onChange={handleChange} className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="Budget">Budget-conscious</option>
+                            <option value="Moderate">Mid-range</option>
+                            <option value="Luxury">Luxury</option>
                         </select>
                     </div>
                     <div>
                         <FormLabel htmlFor="travelers">Travelers</FormLabel>
-                        <select name="travelers" id="travelers" value={prefs.travelers} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <select name="travelers" id="travelers" value={prefs.travelers} onChange={handleChange} className="mt-1 block w-full px-4 py-3 border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
                             <option>Solo</option>
                             <option>Couple</option>
                             <option>Family with kids</option>
@@ -156,7 +156,7 @@ const PreferenceForm: React.FC<PreferenceFormProps> = ({ onSubmit, isLoading, er
 
                 <div className="text-center pt-2">
                     <button type="submit" disabled={isSubmitDisabled} className="w-full md:w-auto px-12 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-transform transform hover:scale-105 disabled:bg-blue-300 disabled:cursor-not-allowed disabled:transform-none">
-                        {isLoading ? 'Generating Draft Itinerary...' : 'Create My Itinerary'}
+                        {isLoading ? 'Searching for flights...' : 'Create My Itinerary'}
                     </button>
                 </div>
             </form>

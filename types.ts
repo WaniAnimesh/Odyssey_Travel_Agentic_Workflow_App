@@ -61,9 +61,9 @@ export interface DailyPlan {
 
 export interface PackingList {
     clothing: string[];
-    documents: string[];
+    documentsAndEssentials: string[];
     toiletries: string[];
-    miscellaneous: string[];
+    electronics: string[];
 }
 
 export interface Experience {
@@ -71,14 +71,36 @@ export interface Experience {
     description: string;
 }
 
+export interface ContingencyPlan {
+    risk: string;
+    plan: string;
+}
+
+export interface LanguagePhrase {
+    english: string;
+    translation: string;
+    phonetic: string;
+}
+
+export interface LanguageGuide {
+    languageName: string;
+    phrases: LanguagePhrase[];
+}
+
+
 export interface Itinerary {
+    tripTitle: string;
     destination: string;
+    departureIata: string;
+    destinationIata: string;
     flight?: FlightOption; // Made optional for draft itinerary
     accommodation: Accommodation;
     dailyPlans: DailyPlan[];
     packingList: PackingList;
     authenticExperiences: Experience[];
     unexpectedDiscoveries: Experience[];
+    contingencyPlans: ContingencyPlan[];
+    languageGuide: LanguageGuide;
 }
 
 // --- NEW TYPES FOR BOOKING CONFIRMATION PAGE ---
@@ -111,6 +133,7 @@ export interface LocationData {
     longitude: number;
 }
 
+// Fix: Add PlanningContext interface
 export interface PlanningContext {
     prefs: UserPreferences;
     departureLocation: LocationData;

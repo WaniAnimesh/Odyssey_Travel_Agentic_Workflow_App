@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import type { UserPreferences, Accommodation, Activity, PackingList, DailyPlan, BookingInfo, Experience } from '../types';
+import type { UserPreferences, Accommodation, Activity, PackingList, DailyPlan, BookingInfo, Experience, ContingencyPlan, LanguageGuide } from '../types';
 
 // The API key must be passed in an object with the `apiKey` property.
 // It is sourced from the environment variable `process.env.API_KEY`.
@@ -73,7 +73,7 @@ export async function comprehensiveItineraryAgent(
     accommodation: Accommodation,
     potentialActivities: Activity[],
     weatherForecast: string
-): Promise<{ dailyPlans: DailyPlan[], packingList: PackingList, authenticExperiences: Experience[], unexpectedDiscoveries: Experience[] }> {
+): Promise<{ tripTitle: string, dailyPlans: DailyPlan[], packingList: PackingList, authenticExperiences: Experience[], unexpectedDiscoveries: Experience[], contingencyPlans: ContingencyPlan[], languageGuide: LanguageGuide }> {
     console.log(`[Agent: Comprehensive Itinerary] Generating full draft for a ${duration}-day trip to ${prefs.destination}.`);
 
     const activityListContext = potentialActivities.length > 0
@@ -81,7 +81,7 @@ export async function comprehensiveItineraryAgent(
         : `No specific activities were found nearby, so you must generate 2-3 plausible activities per day based on the user's interests.`;
     
     const prompt = `
-        You are an expert travel planner. Your task is to create a complete, detailed, and enjoyable ${duration}-day itinerary for a trip to ${prefs.destination}. You must also provide a packing list and suggest unique local experiences.
+        You are an expert travel planner. Your task is to create a complete, detailed, and enjoyable ${duration}-day itinerary for a trip to ${prefs.destination}. You must also provide a packing list, suggest unique local experiences, create a title for the trip, devise contingency plans, and a language guide.
 
         **User Context:**
         - Destination: ${prefs.destination}
@@ -94,20 +94,28 @@ export async function comprehensiveItineraryAgent(
         - Expected Weather: ${weatherForecast}
 
         **Your Required Tasks (in a single JSON response):**
-        1.  **Create Daily Plans:**
+        1.  **Generate a Trip Title:** Create a catchy, descriptive title for this entire journey (e.g., "Kyoto's Ancient Wonders & Modern Delights" or "Goa on a Shoestring: A Culinary Journey").
+
+        2.  **Create Daily Plans:**
             - Structure the trip into ${duration} days.
             - For each day, assign a creative theme.
             - Select or generate 2-3 activities per day that match the user's interests and are logically sequenced.
             - For each day, suggest one thematically appropriate restaurant for breakfast, lunch, and dinner, considering the day's activities and user budget. Provide a name, a brief description, and a price range ("$", "$$", "$$$").
 
-        2.  **Create a Packing List:**
-            - Based on the weather and planned activities, generate a categorized packing list ("Clothing", "Documents", "Toiletries", "Miscellaneous").
+        3.  **Packing List (Packing Agent):**
+            - Generate a helpful 'packingList' based on the destination, duration, the expected weather ("${weatherForecast}"), and the planned daily activities.
+            - You MUST structure this into logical categories using these exact keys in the JSON: "documentsAndEssentials", "clothing", "toiletries", and "electronics".
+            - Tailor the clothing suggestions specifically to the activities and weather. For example, suggest "hiking boots for outdoor days" if hiking is planned, or "a smart outfit for fine dining" if upscale restaurants are included.
 
-        3.  **Suggest Authentic Experiences:**
+        4.  **Suggest Authentic Experiences:**
             - Suggest 2 unique, off-the-beaten-path local experiences a typical tourist might miss, tailored to user interests. Provide a short, compelling title and a description for each.
 
-        4.  **Suggest Unexpected Discoveries:**
+        5.  **Suggest Unexpected Discoveries:**
             - Suggest 2 serendipitous or seasonal activities (e.g., local festivals, special exhibits, natural phenomena) available around the trip's start date. Provide a short, intriguing title and a description for each.
+
+        6.  **Generate Contingency Plans:** Suggest 2 plausible contingency plans for potential issues on this trip (e.g., 'Heavy Rainfall', 'Flight Delays from Origin'). For each, provide a short "risk" title and a "plan" of action.
+
+        7.  **Create a Language Guide:** Generate a brief language and cultural guide for the primary local language spoken at the destination. Provide the "languageName" and a few essential phrases (e.g., Hello, Thank you, How much is this?, Excuse me/Sorry, Yes, No). For each phrase, include the "english" version, the "translation", and a simple "phonetic" pronunciation.
 
         **Available Activities for Planning:**
         ${activityListContext}
@@ -135,6 +143,10 @@ export async function comprehensiveItineraryAgent(
     const schema = {
         type: Type.OBJECT,
         properties: {
+            tripTitle: {
+                type: Type.STRING,
+                description: "A catchy, descriptive title for the entire travel itinerary.",
+            },
             dailyPlans: {
                 type: Type.ARRAY,
                 description: "The array of daily plans for the itinerary.",
@@ -178,12 +190,28 @@ export async function comprehensiveItineraryAgent(
             packingList: {
                 type: Type.OBJECT,
                 properties: {
-                    clothing: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    documents: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    toiletries: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    miscellaneous: { type: Type.ARRAY, items: { type: Type.STRING } }
+                    documentsAndEssentials: {
+                        type: Type.ARRAY,
+                        items: { type: Type.STRING },
+                        description: "List of essential documents and items like passport, visa, travel insurance, etc."
+                    },
+                    clothing: {
+                        type: Type.ARRAY,
+                        items: { type: Type.STRING },
+                        description: "List of clothing items tailored to weather and activities."
+                    },
+                    toiletries: {
+                        type: Type.ARRAY,
+                        items: { type: Type.STRING },
+                        description: "List of personal toiletries."
+                    },
+                    electronics: {
+                        type: Type.ARRAY,
+                        items: { type: Type.STRING },
+                        description: "List of electronic devices and accessories like chargers, adapters."
+                    }
                 },
-                required: ["clothing", "documents", "toiletries", "miscellaneous"]
+                required: ["documentsAndEssentials", "clothing", "toiletries", "electronics"]
             },
             authenticExperiences: {
                 type: Type.ARRAY,
@@ -194,9 +222,41 @@ export async function comprehensiveItineraryAgent(
                 type: Type.ARRAY,
                 description: "An array of 2 seasonal or serendipitous discoveries.",
                 items: experienceSchema
+            },
+            contingencyPlans: {
+                type: Type.ARRAY,
+                description: "An array of 2 contingency plans for the trip.",
+                items: {
+                    type: Type.OBJECT,
+                    properties: {
+                        risk: { type: Type.STRING, description: "The title of the potential risk." },
+                        plan: { type: Type.STRING, description: "The suggested plan to mitigate the risk." }
+                    },
+                    required: ["risk", "plan"]
+                }
+            },
+            languageGuide: {
+                type: Type.OBJECT,
+                description: "A guide to the local language.",
+                properties: {
+                    languageName: { type: Type.STRING, description: "The name of the local language." },
+                    phrases: {
+                        type: Type.ARRAY,
+                        items: {
+                            type: Type.OBJECT,
+                            properties: {
+                                english: { type: Type.STRING },
+                                translation: { type: Type.STRING },
+                                phonetic: { type: Type.STRING }
+                            },
+                            required: ["english", "translation", "phonetic"]
+                        }
+                    }
+                },
+                required: ["languageName", "phrases"]
             }
         },
-         required: ["dailyPlans", "packingList", "authenticExperiences", "unexpectedDiscoveries"],
+         required: ["tripTitle", "dailyPlans", "packingList", "authenticExperiences", "unexpectedDiscoveries", "contingencyPlans", "languageGuide"],
     };
 
     return await generateStructuredJson(prompt, schema);

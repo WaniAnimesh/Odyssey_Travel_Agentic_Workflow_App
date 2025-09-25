@@ -51,6 +51,13 @@ const BookingCard: React.FC<{ title: string; icon: React.ReactNode; children: Re
 );
 
 const BookingDetailsDisplay: React.FC<BookingDetailsDisplayProps> = ({ details, destination, flight, packingList }) => {
+    
+    const formatCategoryTitle = (key: string) => {
+        return key
+            .replace(/([A-Z])/g, ' $1') // insert a space before all caps
+            .replace(/^./, (str) => str.toUpperCase()); // uppercase the first character
+    }
+
     return (
         <div className="space-y-8 animate-fade-in">
             <div className="text-center bg-white p-6 rounded-xl border border-gray-200 shadow-lg">
@@ -70,7 +77,7 @@ const BookingDetailsDisplay: React.FC<BookingDetailsDisplayProps> = ({ details, 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                         {Object.entries(packingList).map(([category, items]) => (
                             <div key={category}>
-                                <h4 className="font-semibold text-gray-700 capitalize mb-2">{category.replace('_', ' ')}</h4>
+                                <h4 className="font-semibold text-gray-700 mb-2">{formatCategoryTitle(category)}</h4>
                                 <ul className="list-disc list-inside space-y-1 text-sm">
                                     {(items as string[]).map((item, index) => (
                                         <li key={index}>{item}</li>
