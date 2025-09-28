@@ -1,20 +1,37 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+Overview
+This repository contains the submission for the GenAI Exchange Hackathon, showcasing a modular, agentic AI system designed to streamline knowledge workflows across diverse domains. Our prototype demonstrates how generative agents can collaborate, reason, and deliver high-impact results through a scalable orchestration framework.
 
-# Run and deploy your AI Studio app
+🚀 Key Features
+Agentic Workflow Engine: Modular architecture enabling plug-and-play agents with distinct capabilities (retrieval, synthesis, presentation).
 
-This contains everything you need to run your app locally.
+Domain-Agnostic Intelligence: Supports use cases across finance, healthcare, education, and more.
 
-View your app in AI Studio: https://ai.studio/apps/drive/1jiScxyh4sAgSGUB0GkCqi46wE8XIj-Z6
+Natural Language Interface: Users interact via intuitive prompts, with agents coordinating behind the scenes.
 
-## Run Locally
+Scalable & Extensible: Easily integrates new agents or tools without disrupting existing flows.
 
-**Prerequisites:**  Node.js
+Presentation-Ready Output: Generates structured, judge-friendly responses suitable for demos and stakeholder review.
 
+🧩 Architecture
+The system is built around a multi-agent orchestration layer, where each agent:
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Operates independently with a defined role
+
+Communicates via a shared memory and task queue
+
+Can be swapped or extended for domain-specific needs
+
+Agents include:
+
+Retriever Agent: Gathers relevant data from internal or external sources
+
+Synthesizer Agent: Summarizes and contextualizes information
+
+Presenter Agent: Formats output for clarity and impact
+
+🛠️ Tech Stack
+Language: Python (agent logic, orchestration)
+
+Frameworks: LangChain, OpenAI API
+
+Tools: Streamlit (UI), Pinecone (vector DB), GitHub Actions (CI/CD
