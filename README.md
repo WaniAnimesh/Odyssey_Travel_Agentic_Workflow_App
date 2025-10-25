@@ -34,4 +34,10 @@ Language: Python (agent logic, orchestration)
 
 Frameworks: LangChain, OpenAI API
 
-Tools: Streamlit (UI), Pinecone (vector DB), GitHub Actions (CI/CD
+Tools: Streamlit (UI), Pinecone (vector DB), GitHub Actions (CI/CD).
+
+<video width="600" controls>
+<source src="https://drive.google.com/file/d/17Ro61gGzmgYTVXFm_tFpWXSREIeZaMSD/view?usp=drive_link" type="video/mp4">
+Your browser does not support the video tag
+</video>
+Demo Video Link: https://drive.google.com/file/d/17Ro61gGzmgYTVXFm_tFpWXSREIeZaMSD/view?usp=drive_link
